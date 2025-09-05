@@ -57,7 +57,7 @@
         const MAX_SCROLL_ATTEMPTS = 10;
 
         function findWatchedVideo() {
-            return document.querySelector("ytd-thumbnail-overlay-resume-playback-renderer")
+            return document.querySelector("yt-thumbnail-overlay-progress-bar-view-model")
                 ?.closest("ytd-grid-video-renderer, ytd-rich-item-renderer");
         }
 
