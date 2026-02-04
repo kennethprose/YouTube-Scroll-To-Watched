@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "YouTube Scroll to Watched",
-    "version": "2.0",
+    "version": "2.2",
     "description": "Scrolls to the most recently watched video on YouTube Subscriptions page.",
     "permissions": [
         "storage",

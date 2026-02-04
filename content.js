@@ -1,5 +1,7 @@
 (function () {
     const BUTTON_ID = "yt-scroll-watched-btn";
+    let isSearching = false;
+    let cancelRequested = false;
 
     function isOnSubscriptions() {
         return location.pathname === "/feed/subscriptions";
@@ -29,7 +31,7 @@
             btn.style.fontWeight = "bold";
             btn.style.fontSize = "14px";
             btn.style.zIndex = "1000";
-            btn.addEventListener("click", scrollToWatchedVideo);
+            btn.addEventListener("click", handleButtonClick);
 
             const parent = searchBar.parentElement;
             parent && parent.appendChild(btn);
@@ -52,6 +54,36 @@
         });
     }
 
+    function updateButtonText(text) {
+        const btn = document.getElementById(BUTTON_ID);
+        if (btn) btn.textContent = text;
+    }
+
+    function handleButtonClick() {
+        const btn = document.getElementById(BUTTON_ID);
+        if (!btn) return;
+
+        if (isSearching) {
+            // User clicked Cancel
+            cancelRequested = true;
+            updateButtonText("Scroll to Watched");
+            console.log("Scroll to watched: cancel requested.");
+            // Attempt to stop any smooth scroll immediately
+            try { window.scrollTo({ top: window.scrollY, behavior: "auto" }); } catch (e) {}
+            return;
+        }
+
+        // Start searching/scrolling
+        isSearching = true;
+        cancelRequested = false;
+        updateButtonText("Cancel");
+        scrollToWatchedVideo().finally(() => {
+            isSearching = false;
+            cancelRequested = false;
+            updateButtonText("Scroll to Watched");
+        });
+    }
+
     async function scrollToWatchedVideo() {
         const SCROLL_DELAY_MS = 500;
         const MAX_SCROLL_ATTEMPTS = 10;
@@ -63,14 +95,23 @@
 
         async function scrollToBottom() {
             return new Promise((resolve) => {
+                if (cancelRequested) return resolve();
                 const distanceToBottom = document.documentElement.scrollHeight - window.innerHeight;
-                window.scrollTo({ top: distanceToBottom, behavior: "smooth" });
-                setTimeout(resolve, SCROLL_DELAY_MS);
+                try { window.scrollTo({ top: distanceToBottom, behavior: "smooth" }); } catch (e) {}
+                const t = setTimeout(() => {
+                    clearTimeout(t);
+                    resolve();
+                }, SCROLL_DELAY_MS);
             });
         }
 
         let attempt = 0;
         while (attempt < MAX_SCROLL_ATTEMPTS) {
+            if (cancelRequested) {
+                console.log("Scroll to watched: aborted by user.");
+                try { window.scrollTo({ top: window.scrollY, behavior: "auto" }); } catch (e) {}
+                return;
+            }
             const watched = findWatchedVideo();
             if (watched) {
                 watched.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -78,6 +119,11 @@
                 return;
             }
             await scrollToBottom();
+            if (cancelRequested) {
+                console.log("Scroll to watched: aborted after scroll.");
+                try { window.scrollTo({ top: window.scrollY, behavior: "auto" }); } catch (e) {}
+                return;
+            }
             attempt++;
         }
         alert("❌ Watched video not found after max attempts.");
