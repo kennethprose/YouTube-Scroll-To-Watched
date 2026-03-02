@@ -89,8 +89,15 @@
         const MAX_SCROLL_ATTEMPTS = 10;
 
         function findWatchedVideo() {
-            return document.querySelector("yt-thumbnail-overlay-progress-bar-view-model")
-                ?.closest("ytd-grid-video-renderer, ytd-rich-item-renderer");
+            const contents = document.getElementById("contents");
+            if (!contents) return null;
+            const items = contents.querySelectorAll("ytd-rich-item-renderer");
+            // Skip the first two items, then search the rest for the watched overlay
+            for (let i = 2; i < items.length; i++) {
+                const watched = items[i].querySelector("yt-thumbnail-overlay-progress-bar-view-model");
+                if (watched) return watched;
+            }
+            return null;
         }
 
         async function scrollToBottom() {
@@ -113,6 +120,7 @@
                 return;
             }
             const watched = findWatchedVideo();
+            console.log(watched);
             if (watched) {
                 watched.scrollIntoView({ behavior: "smooth", block: "center" });
                 console.log("🎯 Found watched video and scrolled to it.");
