@@ -91,10 +91,11 @@
         function findWatchedVideo() {
             const contents = document.getElementById("contents");
             if (!contents) return null;
-            const items = contents.querySelectorAll("ytd-rich-item-renderer");
-            // Skip the first two items, then search the rest for the watched overlay
-            for (let i = 2; i < items.length; i++) {
-                const watched = items[i].querySelector("yt-thumbnail-overlay-progress-bar-view-model");
+            const children = contents.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child.tagName.toLowerCase() !== "ytd-rich-item-renderer") continue;
+                const watched = child.querySelector("yt-thumbnail-overlay-progress-bar-view-model");
                 if (watched) return watched;
             }
             return null;
